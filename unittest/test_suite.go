@@ -100,7 +100,8 @@ func (s *TestSuite) prepareChart(targetChart *chart.Chart) (*chart.Chart, error)
 		for _, fileName := range s.Templates {
 			found := false
 			for _, template := range targetChart.Templates {
-				if filepath.Base(template.Name) == fileName {
+				templateFileName := strings.TrimPrefix(template.Name, "templates/")
+				if templateFileName == fileName {
 					filteredTemplate = append(filteredTemplate, template)
 					found = true
 					break
