@@ -1,3 +1,7 @@
+0.1.6 / 2020-04-05
+==================
+- fix testing of files in subdirectories of templates
+
 0.1.5 / 2019-04-09
 ==================
 - update sprig (#72, #73)
