@@ -1,10 +1,13 @@
-0.1.6 / 2020-04-03
+0.1.7 / 2020-04-09
 ==================
 merged quintush/feature/addJQSyntax, which incorporates the following changes:
 - added jq syntax including test verifications (#95)
 - added Helm V3 compatiblity (#87, #98)
 - make install-binary.sh version aware (#97)
 - added xml outputs JUnit, NUnit, XUnit and update project to use modules (#51, #78)
+
+0.1.6 / 2020-04-03
+==================
 - fix testing of files in subdirectories of templates
 
 0.1.5 / 2019-04-09
