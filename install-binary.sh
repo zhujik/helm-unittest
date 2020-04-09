@@ -5,7 +5,7 @@
 PROJECT_NAME="helm-unittest"
 PROJECT_GH="zhujik/$PROJECT_NAME"
 
-: ${HELM_PLUGIN_PATH:="$(helm home)/plugins/helm-unittest"}
+: ${HELM_PLUGIN_PATH:="$HELM_PLUGIN_DIR"}
 
 # Convert the HELM_PLUGIN_PATH to unix if cygpath is
 # available. This is the case when using MSYS2 or Cygwin
@@ -69,12 +69,12 @@ getDownloadURL() {
   local latest_url="https://api.github.com/repos/$PROJECT_GH/releases/latest"
   local version=$(git describe --tags --exact-match 2>/dev/null)
   if [ -n "$version" ]; then
-    url="https://api.github.com/repos/$PROJECT_GH/releases/tags/$version"
+    latest_url="https://api.github.com/repos/$PROJECT_GH/releases/tags/$version"
   fi
   if type "curl" >/dev/null 2>&1; then
     DOWNLOAD_URL=$(curl -s $latest_url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   elif type "wget" >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(wget -q -O - $latest_url | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    DOWNLOAD_URL=$(wget -q -O - $latest_url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   fi
 }
 
@@ -98,7 +98,7 @@ installFile() {
   tar xf "$PLUGIN_TMP_FILE" -C "$HELM_TMP"
   HELM_TMP_BIN="$HELM_TMP/untt"
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
-  # Use * to also copy the file withe the exe suffix on Windows
+  # Use * to also copy the file with the exe suffix on Windows
   cp "$HELM_TMP_BIN"* "$HELM_PLUGIN_PATH"
   echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
 }

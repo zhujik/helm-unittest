@@ -10,10 +10,13 @@ import (
 
 // TestConfig stores config setup by user in command line
 type TestConfig struct {
+	UseHelmV3      bool
 	Colored        bool
 	UpdateSnapshot bool
 	WithSubChart   bool
 	TestFiles      []string
+	OutputFile     string
+	OutputType     string
 }
 
 var testConfig = TestConfig{}
@@ -58,9 +61,17 @@ details about how to write tests.
 		if cmd.PersistentFlags().Changed("color") {
 			colored = &testConfig.Colored
 		}
+
+		formatter := NewFormatter(testConfig.OutputFile, testConfig.OutputType)
 		printer := NewPrinter(os.Stdout, colored)
-		runner := TestRunner{Printer: printer, Config: testConfig}
-		passed := runner.Run(chartPaths)
+		runner := TestRunner{Printer: printer, Formatter: formatter, Config: testConfig}
+		var passed bool
+
+		if !testConfig.UseHelmV3 {
+			passed = runner.RunV2(chartPaths)
+		} else {
+			passed = runner.RunV3(chartPaths)
+		}
 
 		if !passed {
 			os.Exit(1)
@@ -96,5 +107,20 @@ func init() {
 	cmd.PersistentFlags().BoolVarP(
 		&testConfig.WithSubChart, "with-subchart", "s", true,
 		"include tests of the subcharts within `charts` folder",
+	)
+
+	cmd.PersistentFlags().StringVarP(
+		&testConfig.OutputFile, "output-file", "o", "",
+		"output-file the file where testresults are written in JUnit format, defaults no output is written to file",
+	)
+
+	cmd.PersistentFlags().StringVarP(
+		&testConfig.OutputType, "output-type", "t", "XUnit",
+		"output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit)",
+	)
+
+	cmd.PersistentFlags().BoolVarP(
+		&testConfig.UseHelmV3, "helm3", "3", false,
+		"parse helm charts as helm3 charts.",
 	)
 }

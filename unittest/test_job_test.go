@@ -4,15 +4,22 @@ import (
 	"fmt"
 	"io/ioutil"
 	"testing"
+	"time"
 
-	"github.com/bradleyjkemp/cupaloy"
+	"github.com/bradleyjkemp/cupaloy/v2"
 	. "github.com/lrills/helm-unittest/unittest"
 	"github.com/lrills/helm-unittest/unittest/snapshot"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
+	"helm.sh/helm/v3/pkg/chart/loader"
 
-	"k8s.io/helm/pkg/chartutil"
+	v2util "k8s.io/helm/pkg/chartutil"
 )
+
+func makeTestJobResultSnapshotable(result *TestJobResult) *TestJobResult {
+	result.Duration, _ = time.ParseDuration("0s")
+	return result
+}
 
 func TestUnmarshalableJobFromYAML(t *testing.T) {
 	manifest := `
@@ -53,8 +60,8 @@ asserts:
 	a.Equal(tj.Assertions, assertions)
 }
 
-func TestRunJobOk(t *testing.T) {
-	c, _ := chartutil.Load("../__fixtures__/basic")
+func TestV2RunJobOk(t *testing.T) {
+	c, _ := v2util.Load("../__fixtures__/v2/basic")
 	manifest := `
 it: should work
 asserts:
@@ -70,18 +77,18 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
+	testResult := tj.RunV2(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
-	cupaloy.SnapshotT(t, testResult)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
 }
 
-func TestRunJobWithAssertionFail(t *testing.T) {
-	c, _ := chartutil.Load("../__fixtures__/basic")
+func TestV2RunJobWithAssertionFail(t *testing.T) {
+	c, _ := v2util.Load("../__fixtures__/v2/basic")
 	manifest := `
 it: should work
 asserts:
@@ -97,18 +104,19 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
+	testResult := tj.RunV2(c, &snapshot.Cache{}, &TestJobResult{})
+	// Write Buffer
 
 	a := assert.New(t)
-	cupaloy.SnapshotT(t, testResult)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
 	a.False(testResult.Passed)
 	a.Equal(2, len(testResult.AssertsResult))
 }
 
-func TestRunJobWithValueSet(t *testing.T) {
-	c, _ := chartutil.Load("../__fixtures__/basic")
+func TestV2RunJobWithValueSet(t *testing.T) {
+	c, _ := v2util.Load("../__fixtures__/v2/basic")
 	manifest := `
 it: should work
 set:
@@ -122,18 +130,18 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
+	testResult := tj.RunV2(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
-	cupaloy.SnapshotT(t, testResult)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestRunJobWithValuesFile(t *testing.T) {
-	c, _ := chartutil.Load("../__fixtures__/basic")
+func TestV2RunJobWithValuesFile(t *testing.T) {
+	c, _ := v2util.Load("../__fixtures__/v2/basic")
 	manifest := `
 it: should work
 values:
@@ -150,18 +158,18 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(fmt.Sprintf(manifest, file.Name())), &tj)
 
-	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
+	testResult := tj.RunV2(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
-	cupaloy.SnapshotT(t, testResult)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)
 	a.Equal(1, len(testResult.AssertsResult))
 }
 
-func TestRunJobWithReleaseSetting(t *testing.T) {
-	c, _ := chartutil.Load("../__fixtures__/basic")
+func TestV2RunJobWithReleaseSetting(t *testing.T) {
+	c, _ := v2util.Load("../__fixtures__/v2/basic")
 	manifest := `
 it: should work
 release:
@@ -175,10 +183,143 @@ asserts:
 	var tj TestJob
 	yaml.Unmarshal([]byte(manifest), &tj)
 
-	testResult := tj.Run(c, &snapshot.Cache{}, &TestJobResult{})
+	testResult := tj.RunV2(c, &snapshot.Cache{}, &TestJobResult{})
 
 	a := assert.New(t)
-	cupaloy.SnapshotT(t, testResult)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobOk(t *testing.T) {
+	c, _ := loader.Load("../__fixtures__/v3/basic")
+	manifest := `
+it: should work
+asserts:
+  - equal:
+      path: kind
+      value: Deployment
+    template: deployment.yaml
+  - matchRegex:
+      path: metadata.name
+      pattern: -basic$
+    template: deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(2, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithAssertionFail(t *testing.T) {
+	c, _ := loader.Load("../__fixtures__/v3/basic")
+	manifest := `
+it: should work
+asserts:
+  - equal:
+      path: kind
+      value: WrongKind
+    file: deployment.yaml
+  - matchRegex:
+      path: metadata.name
+      pattern: pattern-not-match
+    file: deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, &TestJobResult{})
+	// Write Buffer
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.False(testResult.Passed)
+	a.Equal(2, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithValueSet(t *testing.T) {
+	c, _ := loader.Load("../__fixtures__/v3/basic")
+	manifest := `
+it: should work
+set:
+  nameOverride: john-doe
+asserts:
+  - equal:
+      path: metadata.name
+      value: RELEASE-NAME-john-doe
+    template: deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithValuesFile(t *testing.T) {
+	c, _ := loader.Load("../__fixtures__/v3/basic")
+	manifest := `
+it: should work
+values:
+  - %s
+asserts:
+  - equal:
+      path: metadata.name
+      value: RELEASE-NAME-mary-jane
+    template: deployment.yaml
+`
+	file, _ := ioutil.TempFile("", "testjob_test_TestRunJobWithValuesFile.yaml")
+	file.WriteString("nameOverride: mary-jane")
+
+	var tj TestJob
+	yaml.Unmarshal([]byte(fmt.Sprintf(manifest, file.Name())), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
+
+	a.Nil(testResult.ExecError)
+	a.True(testResult.Passed)
+	a.Equal(1, len(testResult.AssertsResult))
+}
+
+func TestV3RunJobWithReleaseSetting(t *testing.T) {
+	c, _ := loader.Load("../__fixtures__/v3/basic")
+	manifest := `
+it: should work
+release:
+  name: my-release
+asserts:
+  - equal:
+      path: metadata.name
+      value: my-release-basic
+    template: deployment.yaml
+`
+	var tj TestJob
+	yaml.Unmarshal([]byte(manifest), &tj)
+
+	testResult := tj.RunV3(c, &snapshot.Cache{}, &TestJobResult{})
+
+	a := assert.New(t)
+	cupaloy.SnapshotT(t, makeTestJobResultSnapshotable(testResult))
 
 	a.Nil(testResult.ExecError)
 	a.True(testResult.Passed)

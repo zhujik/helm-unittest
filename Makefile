@@ -2,8 +2,7 @@
 # borrowed from https://github.com/technosophos/helm-template
 
 HELM_HOME ?= $(shell helm home)
-HELM_PLUGIN_DIR ?= $(HELM_HOME)\plugins\helm-unittest
-HAS_DEP := $(shell command -v dep;)
+HELM_PLUGIN_DIR ?= $(HELM_HOME)/plugins/helm-unittest
 VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 DIST := $(CURDIR)/_dist
 LDFLAGS := "-X main.version=${VERSION} -extldflags '-static'"
@@ -38,10 +37,6 @@ dist-win:
 
 .PHONY: bootstrap
 bootstrap:
-ifndef HAS_DEP
-	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-endif
-	dep ensure
 
 dockerimage:
 	docker build -t $(DOCKER):$(VERSION) .

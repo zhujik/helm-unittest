@@ -1,5 +1,9 @@
 # helm unittest
 
+[![CircleCI](https://circleci.com/gh/quintush/helm-unittest.svg?style=svg)](https://circleci.com/gh/quintush/helm-unittest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/quintush/helm-unittest)](https://goreportcard.com/report/github.com/quintush/helm-unittest)
+[![codecov](https://codecov.io/gh/quintush/helm-unittest/branch/master/graph/badge.svg)](https://codecov.io/gh/quintush/helm-unittest)
+
 Unit test for *helm chart* in YAML to keep your chart consistent and robust!
 
 Feature:
@@ -27,7 +31,7 @@ If you are ready for writing tests, check the [DOCUMENT](./DOCUMENT.md) for the 
 ## Install
 
 ```
-$ helm plugin install https://github.com/lrills/helm-unittest
+$ helm plugin install https://github.com/quintush/helm-unittest
 ```
 
 It will install the latest version of binary into helm plugin directory.
@@ -83,15 +87,19 @@ defined in test suite files.
 ### Flags
 
 ```
---color              enforce printing colored output even stdout is not a tty. Set to false to disable color
--f, --file stringArray   glob paths of test files location, default to tests/*_test.yaml (default [tests/*_test.yaml])
--h, --help               help for unittest
--u, --update-snapshot    update the snapshot cached if needed, make sure you review the change before update
+      --color                  enforce printing colored output even stdout is not a tty. Set to false to disable color
+  -f, --file stringArray       glob paths of test files location, default to tests\*_test.yaml (default [tests\*_test.yaml])
+  -3, --helm3                  parse helm charts as helm3 charts (default false)
+  -h, --help                   help for unittest
+  -o, --output-file string     output-type the file-format where testresults are written in, accepted types are (JUnit, NUnit, XUnit) (default XUnit)
+  -u, --update-snapshot        update the snapshot cached if needed, make sure you review the change before update
+  -s, --with-subchart charts   include tests of the subcharts within charts folder (default true)
 ```
 
 ## Example
 
-Check [`__fixtures__/basic/`](./__fixtures__/basic) for some basic use cases of a simple chart.
+Check [`__fixtures__/v2/basic/`](./__fixtures__/v2/basic) for some basic use cases of a simple chart (version < 2).
+Check [`__fixtures__/v3/basic/`](./__fixtures__/v3/basic) for some basic use cases of a simple chart (version > 3).
 
 ## Snapshot Testing
 
@@ -116,7 +124,7 @@ The `matchSnapshot` assertion validate the content rendered the same as cached l
 ```
 $ helm unittest -u my-chart
 ```
-The cache files is stored as `__snapshot__/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
+The cache files is stored as `__snapshot__/v2/*_test.yaml.snap` at the directory your test file placed, you should add them in version control with your chart.
 
 ## Tests within subchart
 
@@ -134,7 +142,7 @@ tests:
     asserts:
       - ...
 ```
-Check [`__fixtures__/with-subchart/`](./__fixtures__/with-subchart) as an example.
+Check [`__fixtures__/v2/with-subchart/`](./__fixtures__/v2/with-subchart) as an example.
 
 ## Related Projects / Commands
 
@@ -156,18 +164,16 @@ MIT
 ## Contributing
 
 Issues and PRs are welcome!  
-Before start developing this plugin, you must have [go](https://golang.org/doc/install) and [dep](https://github.com/golang/dep#installation) installed, and run:
+Before start developing this plugin, you must have [go] (https://golang.org/doc/install) >= 1.12 installed, and run:
 
 ```
-git clone git@github.com:lrills/helm-unittest.git
+git clone git@github.com:quintush/helm-unittest.git
 cd helm-unittest
-dep ensure
 ```
 
 And please make CI passed when request a PR which would check following things:
 
-- `dep status` passed. Make sure you run `dep ensure` if new dependencies added.
-- `gofmt` no changes needed. Please run `gofmt -w -s` before you commit.
+- `gofmt` no changes needed. Please run `gofmt -w -s .` before you commit.
 - `go test ./unittest/...` passed.
 
 In some cases you might need to manually fix the tests in `*_test.go`. If the snapshot tests (of the plugin's test code) failed you need to run:
