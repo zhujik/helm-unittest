@@ -97,6 +97,7 @@ installFile() {
   mkdir -p "$HELM_TMP"
   tar xf "$PLUGIN_TMP_FILE" -C "$HELM_TMP"
   HELM_TMP_BIN="$HELM_TMP/untt"
+  chmod +x $HELM_TMP_BIN
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
   # Use * to also copy the file with the exe suffix on Windows
   cp "$HELM_TMP_BIN"* "$HELM_PLUGIN_PATH"

@@ -25,9 +25,9 @@ build:
 dist:
 	mkdir -p $(DIST)
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./main.go
-	tar -zcvf $(DIST)/helm-unittest-linux-$(VERSION).tgz untt README.md LICENSE plugin.yaml
+	tar -zcvf $(DIST)/helm-unittest-linux-$(VERSION).tgz untt README.md LICENSE plugin.yaml --force-local
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o untt -ldflags $(LDFLAGS) ./main.go
-	tar -zcvf $(DIST)/helm-unittest-macos-$(VERSION).tgz untt README.md LICENSE plugin.yaml
+	tar -zcvf $(DIST)/helm-unittest-macos-$(VERSION).tgz untt README.md LICENSE plugin.yaml --force-local
 	
 .PHONY: dist-win
 dist-win:
